@@ -66,33 +66,37 @@ def _flatten(col: Sequence[Any]) -> Sequence[Any]:
 
 class DOMElement:
     def __init__(self, tag: str, pre_processor: TagPreProcessor) -> None:
-        self.tag = tag
-        self.pre_processor = pre_processor
-        self.content = []
-        self.attributes = {}
+        self._tag = tag
+        self._pre_processor = pre_processor
+        self._content = []
+        self._attributes = {}
+        self._frozen = False
     
-    def __call__(self, *args: [Any], **kwds: Dict[str, Any]) -> Any:        
+    def __call__(self, *args: [Any], **kwds: Dict[str, Any]) -> Any:
+        if self._frozen:
+            raise HTMXError("Mutating frozen element")
+        
         kwds = _pre_process_keyword_conflict_attrs(**kwds)
-        if self.pre_processor is not None:
-            f = self.pre_processor
+        if self._pre_processor is not None:
+            f = self._pre_processor
             args, kwds = f(*args, **kwds)
 
-        self.attributes.update(kwds)
-        self.content = self.content + _flatten(args)
+        self._attributes.update(kwds)
+        self._content = self._content + _flatten(args)
         return self
-    
-    def __str__(self) -> str:
-        ret = [f"<{self.tag}"]
 
-        for key, value in self.attributes.items():
+    def __str__(self) -> str:
+        ret = [f"<{self._tag}"]
+
+        for key, value in self._attributes.items():
             if value is not None:
                 ret.append(f" {key}=\"{escape(value)}\"")
             else:
                 ret.append(f" {key}")
 
-        if len(self.content) > 0:
+        if len(self._content) > 0:
             ret.append(">")
-            for c in self.content:
+            for c in self._content:
                 if isinstance(c, DOMElement):
                     ret.append(str(c))
                 elif isinstance(c, str):
@@ -100,21 +104,21 @@ class DOMElement:
                 else:
                     raise HTMXError("Uknown type for variable", c)
         
-        if len(self.content) < 1 and self.tag in single_tags:
+        if len(self._content) < 1 and self._tag in single_tags:
             ret.append(f" />")
         else:
-            ret.append(f"</{self.tag}>")
+            ret.append(f"</{self._tag}>")
         
         return ''.join(ret)
 
 class DOM:
     def __init__(self, pre_processor: TagPreProcessor = None) -> None:
-        self.pre_processor = pre_processor
+        self._pre_processor = pre_processor
     
     def __getattr__(self, tag: str):
         if tag.startswith("__") and tag.endswith("__"):
             raise HTMXError("Bad tag", tag)
-        return DOMElement(tag, self.pre_processor)
+        return DOMElement(tag, self._pre_processor)
 
 domx = DOM(pre_processor=_htmx_pre_processor)
 
