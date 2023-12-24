@@ -65,8 +65,7 @@ def _flatten(col: Sequence[Any]) -> Sequence[Any]:
     return ret
 
 class DOMElement:
-    def __init__(self, tag: str, case: str, pre_processor: TagPreProcessor) -> None:
-        self.case = case
+    def __init__(self, tag: str, pre_processor: TagPreProcessor) -> None:
         self.tag = tag
         self.pre_processor = pre_processor
         self.content = []
@@ -109,14 +108,13 @@ class DOMElement:
         return ''.join(ret)
 
 class DOM:
-    def __init__(self, case: str = 'lower', pre_processor: TagPreProcessor = None) -> None:
-        self.case = case
+    def __init__(self, pre_processor: TagPreProcessor = None) -> None:
         self.pre_processor = pre_processor
     
     def __getattr__(self, tag: str):
         if tag.startswith("__") and tag.endswith("__"):
             raise HTMXError("Bad tag", tag)
-        return DOMElement(tag, self.case, self.pre_processor)
+        return DOMElement(tag, self.pre_processor)
 
 domx = DOM(pre_processor=_htmx_pre_processor)
 
