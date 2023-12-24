@@ -60,9 +60,21 @@ Now there are two beautiful parts that backend developers will really appriciate
  - **Lazy evaluated** - Unless you serialize your DOM (with conversion to `str`), it remains DOM! Which means you can cache for even more speed.
  - **Functional components** - You can easily think view functions returning you these DOM elements that can be reused across requests.
 
+So in a nutshell you can do something like this:
 
 ```python
-import htmxido import DOMElement, domx as x
-def header(name: str) -> DOMElement:
-    return x.div(class_="")
+from htmxido import DOMElement, domx
+
+## Imagine more functional components here
+
+## For this example let's imagine we want to render a header component with hamburger menu.
+@cached(ttl=3600)
+def header(account: AccountInfo) -> DOMElement:
+    """
+    Returns header DOM component for given element account info
+    """
+    return domx.div(class_="nav-bar full-width responsive")(
+        domx.h1(f"Welcome {account.name}"),
+        hamburger(account) # Reusing another component
+    )
 ```
