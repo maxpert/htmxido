@@ -76,3 +76,36 @@ def header(account: AccountInfo) -> DOMElement:
         hamburger(account) # Reusing another component
     )
 ```
+
+### More usage examples:
+
+Here is an example app Sanic:
+
+```python
+from sanic import Sanic, html
+from htmxido import domx as x
+
+app = Sanic("Pythia")
+
+@app.post("/clicked")
+async def clicked(request):
+    return html(str(
+        x.div("Clicked!!!")
+    ))
+
+@app.get("/")
+async def home(request):
+    return html(str(
+        x.html(
+            x.head(
+                x.script(src="https://unpkg.com/htmx.org@1.9.9")
+            ),
+            x.body(
+                x.h1("Running htmxido"),
+                x.div(id="container")(
+                    x.button("Reveal!!!", hxTarget="#container", hxTrigger="click", hxPost="/clicked")
+                ),
+            )
+        )
+    ))
+```
