@@ -10,12 +10,9 @@ pip install htmxido
 
 ## Why?
 
-Since the invent of React SSR (likes of Next.js), people are suddenly excited about writing server side views.
-While this method is not new (PHP the grand dad of all), I was looking for something that is very close 
-to writing inline code that can generate HTML and process HTMX attributes on those elements.
+Since the invention of React SSR (like Next.js), there has been newfound enthusiasm for writing server-side views. Although this method isn't new (consider PHP, the grandfather of all), I was searching for a solution close to writing inline code capable of generating HTML and processing HTMX attributes on those elements.
 
-After looking around and finding a few libraries but none of them were satifactory. So I ended up writing something
-for my own self, only to realize it can be reused by more people.
+After exploring various libraries and finding them unsatisfactory, I ended up creating something for myself. It later dawned on me that it could benefit more people.
 
 ## What does it look like?
 
@@ -51,17 +48,15 @@ print(str(example_dom))
 
 ## So I can write views like code, what's the big deal?
 
-As much as people hated PHP and made fun of it. With the invent of HTMX it has become very obvious that writing medium sized 
-applications in React is bloated (because react was supposed to do small parts of page), and effort engineers are spending 
-for basic stuff that can be done by simply sending back HTML from server is something everyone under-estimated. While you
-might be digusted by the idea of replacing a `.innerHTML` the old school way, turns you can do a lot with just HTMX
-and jQuery aged declarative DOM ([here is an example](https://www.youtube.com/watch?v=3GObi93tjZI)). 
+As much as people hated PHP and made fun of it, with the invention of HTMX, it has become evident that building medium-sized applications in React is bloated (as React was intended for smaller parts of the page). The effort engineers put into basic tasks that could be accomplished by merely sending back HTML from the server was underestimated.
 
-Now there are two beautiful parts that backend developers will really appriciate about htmxido:
+While you might be averse to the idea of replacing .innerHTML the old-school way, it turns out you can achieve a lot with just HTMX and jQuery-like declarative DOM ([here is an example](https://www.youtube.com/watch?v=3GObi93tjZI)).
 
- - **It's all Python** - Which means you it runs fast! You can use existing tooling, and linters.
- - **Lazy evaluated** - Unless you serialize your DOM (with conversion to `str`), it remains DOM! Which means you can cache for even more speed.
- - **Functional components** - You can easily think view functions returning you these DOM elements that can be reused across requests.
+Now, there are a few excellent aspects that backend developers will truly appreciate about htmxido:
+
+ - **It's all Python** - This means it runs fast! You can use existing tooling and linters.
+ - **Lazy evaluated** - Unless you serialize your DOM (with conversion to str), it remains a DOM! This implies that you can cache for even more speed.
+ - **Functional components** - You can easily envision view functions returning these DOM elements that can be reused across requests.
 
 So in a nutshell you can do something like this:
 
