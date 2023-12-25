@@ -34,7 +34,8 @@ example_dom = x.div(id="root", class_="bg-white dark:bg-slate-800 rounded-lg px-
 print(str(example_dom))
 ```
 
-Will have following output:
+**NOTE**: Any keyword attributes should be suffixed with `_`, and they will be removed as per showin in following output.
+
 ```html
 <div id="root" class="bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-xl">
     <h1 hx-indicator="#spinner">Hello World</h1>

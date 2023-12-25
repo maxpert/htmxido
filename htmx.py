@@ -1,33 +1,27 @@
-from typing import Any, Sequence, Callable, Tuple, Dict
-from collections.abc import Collection
-from types import GeneratorType
 import keyword
 import re
+from collections.abc import Collection
+from html import escape
+from types import GeneratorType
+from typing import Any, Sequence, Callable, Tuple, Dict, List, Iterable
 
-TagPreProcessor = Callable[ [Sequence[Any], Dict[str, Any]], Tuple[Sequence[Any], Dict[str, Any]] ]
+TagPreProcessor = Callable[[Sequence[Any], Dict[str, Any]], Tuple[Sequence[Any], Dict[str, Any]]]
 
 capitals_pattern = re.compile(r'(?<!^)(?=[A-Z])')
 spaces_pattern = re.compile(r' ')
-single_tags = {'area', 'img', 'wbr', 'command', 'link', 'meta', 'embed', 'param', 'source', 'br', 'track', 'input', 'col', 'base', 'hr'}
+single_tags = {
+    'area', 'img', 'wbr',
+    'command', 'link', 'meta',
+    'embed', 'param', 'source',
+    'br', 'track', 'input',
+    'col', 'base', 'hr'
+}
 
-def escape(text: str) -> str:
-    if isinstance( text, str ):
-        if '&' in text:
-            text = text.replace( '&', '&amp;' )
-        if '>' in text:
-            text = text.replace( '>', '&gt;' )
-        if '<' in text:
-            text = text.replace( '<', '&lt;' )
-        if '\"' in text:
-            text = text.replace( '\"', '&quot;' )
-        if '\'' in text:
-            text = text.replace( '\'', '&quot;' )
 
-    return text
-
-def _kebab_case(s: str) -> str:    
+def _kebab_case(s: str) -> str:
     s = capitals_pattern.sub(' ', s)
     return s.replace('_', ' ').replace(' ', '-').lower()
+
 
 def _htmx_pre_processor(*args: Sequence[Any], **kwds: Dict[str, Any]) -> Tuple[Sequence[Any], Dict[str, Any]]:
     ret = {}
@@ -36,17 +30,19 @@ def _htmx_pre_processor(*args: Sequence[Any], **kwds: Dict[str, Any]) -> Tuple[S
             ret[_kebab_case(n)] = v
         else:
             ret[n] = v
-    return (args, ret)
+    return args, ret
 
-def _pre_process_keyword_conflict_attrs(**kwds: Dict[str, Any]) -> Dict[str, Any]:
+
+def _pre_process_keyword_attrs(*args: Sequence[Any], **kwds: Dict[str, Any]) -> Tuple[Sequence[Any], Dict[str, Any]]:
     ret = {}
     for n, v in kwds.items():
         if n.endswith("_") and keyword.iskeyword(n[:-1]):
             n = n[:-1]
         ret[n] = v
-    return ret
+    return args, ret
 
-def _flatten(col: Sequence[Any]) -> Sequence[Any]:
+
+def _flatten(col: Iterable[Any]) -> List[Any]:
     ret = []
     for c in col:
         if isinstance(c, GeneratorType):
@@ -61,40 +57,44 @@ def _flatten(col: Sequence[Any]) -> Sequence[Any]:
             continue
 
         ret.append(c)
-    
+
     return ret
 
+
 class DOMElement:
-    def __init__(self, tag: str, pre_processor: TagPreProcessor) -> None:
+    def __init__(self, tag: str, pre_processor: [TagPreProcessor]) -> None:
         self._tag = tag
         self._pre_processor = pre_processor
-        self._content = []
+        self._content = None
         self._attributes = {}
-        self._frozen = False
-    
+
     def __call__(self, *args: [Any], **kwds: Dict[str, Any]) -> Any:
-        if self._frozen:
-            raise HTMXError("Mutating frozen element")
-        
-        kwds = _pre_process_keyword_conflict_attrs(**kwds)
-        if self._pre_processor is not None:
-            f = self._pre_processor
+        for f in self._pre_processor:
             args, kwds = f(*args, **kwds)
 
         self._attributes.update(kwds)
-        self._content = self._content + _flatten(args)
+
+        if self._content is not None:
+            raise HTMXError("Content mutation not allowed")
+
+        if self._tag in single_tags and len(args) > 0:
+            raise HTMXError(f"{self._tag} can not have content body")
+
+        if len(args) > 0:
+            self._content = _flatten(args)
         return self
 
     def __str__(self) -> str:
         ret = [f"<{self._tag}"]
-
         for key, value in self._attributes.items():
             if value is not None:
                 ret.append(f" {key}=\"{escape(value)}\"")
             else:
                 ret.append(f" {key}")
 
-        if len(self._content) > 0:
+        if self._tag in single_tags:
+            ret.append(f" />")
+        elif self._content is not None:
             ret.append(">")
             for c in self._content:
                 if isinstance(c, DOMElement):
@@ -102,27 +102,31 @@ class DOMElement:
                 elif isinstance(c, str):
                     ret.append(escape(c))
                 else:
-                    raise HTMXError("Uknown type for variable", c)
-        
-        if len(self._content) < 1 and self._tag in single_tags:
-            ret.append(f" />")
-        else:
+                    raise HTMXError("Unknown type for variable", c)
             ret.append(f"</{self._tag}>")
-        
+        else:
+            ret.append(f"></{self._tag}>")
+
         return ''.join(ret)
 
+
 class DOM:
-    def __init__(self, pre_processor: TagPreProcessor = None) -> None:
+    def __init__(self, pre_processor: [TagPreProcessor]) -> None:
         self._pre_processor = pre_processor
-    
+
     def __getattr__(self, tag: str):
         if tag.startswith("__") and tag.endswith("__"):
             raise HTMXError("Bad tag", tag)
         return DOMElement(tag, self._pre_processor)
 
-domx = DOM(pre_processor=_htmx_pre_processor)
 
 class HTMXError(Exception):
-    """All our exceptions subclass this."""
-    def __str__( self ):
+    def __init__(self, message: str, *args: [Any]) -> None:
+        self.args = args
+        self.message = message
+
+    def __str__(self):
         return self.message
+
+
+domx = DOM(pre_processor=[_pre_process_keyword_attrs, _htmx_pre_processor])
