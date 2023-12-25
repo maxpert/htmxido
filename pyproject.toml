@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.2", "wheel"]
+
+[project]
+name = "htmxido"
+version = "0.0.2"
+authors = [
+  { name="Zohaib Sibte Hassan", email="zohaibsh@gmail.com" },
+]
+description = "A Python library to generate HTMX/HTML"
+readme = "README.md"
+requires-python = ">=3.6"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Text Processing :: Markup :: HTML"
+]
+
+[project.urls]
+Homepage = "https://github.com/maxpert/htmxido"
+Issues = "https://github.com/maxpert/htmxido/issues"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+exclude = ["test*"]

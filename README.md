@@ -4,7 +4,9 @@ HTMXido is declerative HTMX generation library for Python.
 
 ## Install
 
-TBD
+```
+pip install htmxido
+```
 
 ## Why?
 

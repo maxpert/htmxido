@@ -93,7 +93,7 @@ class DOMElement:
                 ret.append(f" {key}")
 
         if self._tag in single_tags:
-            ret.append(f" />")
+            ret.append(" />")
         elif self._content is not None:
             ret.append(">")
             for c in self._content:
