@@ -1,6 +1,6 @@
 import unittest
 
-from . import domx, HTMXError
+from .htmxido import domx, HTMXError
 
 
 def test_body_escapes_special_characters():
