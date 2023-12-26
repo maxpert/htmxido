@@ -109,3 +109,11 @@ async def home(request):
         )
     ))
 ```
+
+## Contributing
+
+I use pytest for testing, and coverage for coverage report. You can simply run tests by:
+
+```sh
+coverage run -m pytest && coverage html && open htmlcov/index.html
+```

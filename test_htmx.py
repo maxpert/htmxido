@@ -70,6 +70,14 @@ def test_empty_tag_close():
     assert str(domx.script(src="test.js")) == '<script src="test.js"></script>'
 
 
+def test_script_content_is_default_raw():
+    assert str(domx.script("window.alert('Hello')")) == "<script>window.alert('Hello')</script>"
+
+
+def test_explicit_raw():
+    assert str(domx.div(domx.raw("<Test>"))) == "<div><Test></div>"
+
+
 class ExceptionTests(unittest.TestCase):
     def test_already_added_content_throws(self):
         with self.assertRaises(HTMXError) as ctx:

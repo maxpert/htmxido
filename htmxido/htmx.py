@@ -16,6 +16,9 @@ single_tags = {
     'br', 'track', 'input',
     'col', 'base', 'hr'
 }
+default_raw = {
+    'script'
+}
 
 
 def _kebab_case(s: str) -> str:
@@ -61,6 +64,14 @@ def _flatten(col: Iterable[Any]) -> List[Any]:
     return ret
 
 
+class RawContent:
+    def __init__(self, _content: str) -> None:
+        self._content = _content
+
+    def __str__(self) -> str:
+        return self._content
+
+
 class DOMElement:
     def __init__(self, tag: str, pre_processor: [TagPreProcessor]) -> None:
         self._tag = tag
@@ -97,8 +108,10 @@ class DOMElement:
         elif self._content is not None:
             ret.append(">")
             for c in self._content:
-                if isinstance(c, DOMElement):
+                if isinstance(c, DOMElement) or isinstance(c, RawContent):
                     ret.append(str(c))
+                elif isinstance(c, str) and self._tag in default_raw:
+                    ret.append(c)
                 elif isinstance(c, str):
                     ret.append(escape(c))
                 else:
@@ -113,6 +126,9 @@ class DOMElement:
 class DOM:
     def __init__(self, pre_processor: [TagPreProcessor]) -> None:
         self._pre_processor = pre_processor
+
+    def raw(self, content) -> RawContent:
+        return RawContent(content)
 
     def __getattr__(self, tag: str):
         if tag.startswith("__") and tag.endswith("__"):
