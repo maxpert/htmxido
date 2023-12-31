@@ -3,7 +3,7 @@ import re
 from collections.abc import Collection
 from html import escape
 from types import GeneratorType
-from typing import Any, Sequence, Callable, Tuple, Dict, List, Iterable
+from typing import Any, Generator, Sequence, Callable, Tuple, Dict, List, Iterable
 
 TagPreProcessor = Callable[[Sequence[Any], Dict[str, Any]], Tuple[Sequence[Any], Dict[str, Any]]]
 
@@ -94,33 +94,39 @@ class DOMElement:
         if len(args) > 0:
             self._content = _flatten(args)
         return self
+    
+    def iter_html(self) -> Generator[str, None, None]:
+        yield f"<{self._tag}"
 
-    def __str__(self) -> str:
-        ret = [f"<{self._tag}"]
         for key, value in self._attributes.items():
             if value is not None:
-                ret.append(f" {key}=\"{escape(value)}\"")
+                yield f" {key}=\"{escape(value)}\""
             else:
-                ret.append(f" {key}")
+                yield f" {key}"
 
         if self._tag in single_tags:
-            ret.append(" />")
+            yield " />"
         elif self._content is not None:
-            ret.append(">")
+            yield ">"
             for c in self._content:
-                if isinstance(c, DOMElement) or isinstance(c, RawContent):
-                    ret.append(str(c))
+                if isinstance(c, DOMElement):
+                    for chunk in c.iter_html():
+                        yield chunk 
+                elif isinstance(c, RawContent):
+                    yield str(c)
                 elif isinstance(c, str) and self._tag in default_raw:
-                    ret.append(c)
+                    yield c
                 elif isinstance(c, str):
-                    ret.append(escape(c))
+                    yield escape(c)
                 else:
                     raise HTMXError("Unknown type for variable", c)
-            ret.append(f"</{self._tag}>")
+            yield f"</{self._tag}>"
         else:
-            ret.append(f"></{self._tag}>")
+            yield f"></{self._tag}>"
 
-        return ''.join(ret)
+    def __str__(self) -> str:
+        chunks = [chunk for chunk in self.iter_html()]
+        return ''.join(chunks)
 
 
 class DOM:
