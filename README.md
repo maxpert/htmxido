@@ -2,6 +2,8 @@
 
 HTMXido is declerative HTMX generation library for Python.
 
+[![codecov](https://codecov.io/gh/maxpert/htmxido/graph/badge.svg?token=ULBG6B8R39)](https://codecov.io/gh/maxpert/htmxido)
+
 ## Install
 
 ```
