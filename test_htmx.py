@@ -1,6 +1,6 @@
 import unittest
 
-from .htmxido import domx, HTMXError
+from .htmxido import domx, HTMXError, render
 
 
 def test_body_escapes_special_characters():
@@ -96,6 +96,37 @@ class ExceptionTests(unittest.TestCase):
             str(domx.div(9.0))
 
         self.assertTrue("Unknown type for variable" in str(ctx.exception))
+
+
+class RenderTests(unittest.TestCase):
+    def test_render_yields_full_html(self):
+        assert [x for x in render(domx.div(
+            domx.ul(
+                domx.li("one"),
+                domx.li("two"),
+            )
+        ))] == ["<div><ul><li>one</li><li>two</li></ul></div>"]
+
+    def test_render_with_limit_size_yeilds_chunks(self):
+        buffers = [x for x in render(domx.div(
+            domx.ul(
+                domx.li(f"Item {i}") for i in range(1, 9999)
+            )
+        ), buffer_size=512)]
+
+        for b in buffers:
+            assert len(b) <= 512
+
+    def test_invalid_buffer(self):
+        with self.assertRaises(HTMXError) as ctx:
+            [x for x in render(domx.div("This should cause throw"), buffer_size='99')]
+
+        self.assertTrue("Invalid buffer size 99")
+
+        with self.assertRaises(HTMXError) as ctx:
+            [x for x in render(domx.div("This should cause throw"), buffer_size=-1)]
+
+        self.assertTrue("Invalid buffer size")
 
 
 def test_example():

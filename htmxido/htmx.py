@@ -1,5 +1,7 @@
+import io
 import keyword
 import re
+
 from collections.abc import Collection
 from html import escape
 from types import GeneratorType
@@ -19,6 +21,15 @@ single_tags = {
 default_raw = {
     'script'
 }
+
+
+class HTMXError(Exception):
+    def __init__(self, message: str, *args: [Any]) -> None:
+        self.args = args
+        self.message = message
+
+    def __str__(self):
+        return self.message
 
 
 def _kebab_case(s: str) -> str:
@@ -141,14 +152,27 @@ class DOM:
             raise HTMXError("Bad tag", tag)
         return DOMElement(tag, self._pre_processor)
 
-
-class HTMXError(Exception):
-    def __init__(self, message: str, *args: [Any]) -> None:
-        self.args = args
-        self.message = message
-
-    def __str__(self):
-        return self.message
-
-
 domx = DOM(pre_processor=[_pre_process_keyword_attrs, _htmx_pre_processor])
+
+def render(*elms: DOMElement, buffer_size=None) -> Generator[str, None, None]:
+    buffer = io.StringIO()
+    buffer_len = 0
+    if not (buffer_size is None or isinstance(buffer_size, int)):
+        raise HTMXError(f"Invalid buffer size {buffer_size}")
+    
+    if isinstance(buffer_size, int) and buffer_size <= 0:
+        raise HTMXError("Invalid buffer size")
+    
+    for e in elms:
+        for chunk in e.iter_html():
+            chunk_len = len(chunk)
+            if buffer_size is not None and buffer_len + chunk_len > buffer_size:
+                yield buffer.getvalue()
+                buffer = io.StringIO()
+                buffer_len = 0
+            
+            buffer.write(chunk)
+            buffer_len += chunk_len
+    
+    if buffer_size is None or buffer_len > 0:
+        yield buffer.getvalue()
